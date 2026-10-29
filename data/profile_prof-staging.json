@@ -1,0 +1,410 @@
+{
+  "payloads": [
+    {
+      "id": "cp-1",
+      "endpoint": "/api/v1/customers/cust_99281",
+      "method": "POST",
+      "title": "Standard Customer Document",
+      "description": "Typical customer record from CouchDB users database with nested profile and account details.",
+      "createdAt": "2026-10-24T08:30:00Z",
+      "tags": [
+        "Customer",
+        "Production",
+        "US-East"
+      ],
+      "payload": {
+        "_id": "cust_99281",
+        "_rev": "4-a89b2c3d4e5f6g7h",
+        "type": "customer",
+        "profile": {
+          "firstName": "Eleanor",
+          "lastName": "Vance",
+          "email": "eleanor.vance@enterprise.io",
+          "phone": "+1-555-019-2831"
+        },
+        "account": {
+          "creditLimit": 15000,
+          "isActive": true,
+          "tier": "enterprise"
+        },
+        "metadata": {
+          "source": "web_signup",
+          "ipAddress": "192.168.1.45"
+        },
+        "createdAt": 1772184600000
+      }
+    },
+    {
+      "id": "cp-2",
+      "endpoint": "/api/v1/customers/cust_invalid_null",
+      "method": "POST",
+      "title": "Customer with Missing Mandatory Fields",
+      "description": "Malformed CouchDB payload missing email and invalid null values to test constraint validation.",
+      "createdAt": "2026-10-25T14:10:00Z",
+      "tags": [
+        "Customer",
+        "Test",
+        "Negative"
+      ],
+      "payload": {
+        "_id": "cust_invalid_null",
+        "_rev": "1-x99z",
+        "type": "customer",
+        "profile": {
+          "firstName": "Marcus",
+          "lastName": null,
+          "email": "",
+          "phone": null
+        },
+        "account": {
+          "creditLimit": "INVALID_DECIMAL",
+          "isActive": "not_a_boolean"
+        },
+        "createdAt": "not-a-timestamp"
+      }
+    },
+    {
+      "id": "cp-3",
+      "endpoint": "/api/v1/orders/ord_882910",
+      "method": "POST",
+      "title": "Bulk Order Document with Items Array",
+      "description": "Complex CouchDB order document containing nested line items array and tax breakdowns.",
+      "createdAt": "2026-10-26T16:45:00Z",
+      "tags": [
+        "Orders",
+        "Production",
+        "Inventory"
+      ],
+      "payload": {
+        "_id": "ord_882910",
+        "_rev": "2-9b8a7f",
+        "customerId": "cust_99281",
+        "orderTotal": 432.5,
+        "currency": "USD",
+        "items": [
+          {
+            "sku": "SKU-PRO-01",
+            "qty": 2,
+            "unitPrice": 150
+          },
+          {
+            "sku": "SKU-ACC-09",
+            "qty": 1,
+            "unitPrice": 132.5
+          }
+        ],
+        "status": "processing"
+      }
+    }
+  ],
+  "templates": [
+    {
+      "id": "tpl-customer",
+      "name": "Customer Profile Mapping",
+      "description": "Maps CouchDB customer document structure to MySQL customers table",
+      "targetTable": "mysql_customers",
+      "createdAt": "2026-01-15T10:00:00Z",
+      "updatedAt": "2026-02-20T14:30:00Z",
+      "mappings": [
+        {
+          "id": "m-1",
+          "couchField": "_id",
+          "mysqlColumn": "id",
+          "dataType": "VARCHAR",
+          "nullable": false,
+          "groupId": "g-1",
+          "description": "CouchDB doc ID mapped to customer UUID"
+        },
+        {
+          "id": "m-2",
+          "couchField": "_rev",
+          "mysqlColumn": "couch_rev",
+          "dataType": "VARCHAR",
+          "nullable": true,
+          "groupId": "g-1",
+          "description": "CouchDB revision token"
+        },
+        {
+          "id": "m-3",
+          "couchField": "profile.firstName",
+          "mysqlColumn": "first_name",
+          "dataType": "VARCHAR",
+          "nullable": false,
+          "groupId": "g-2",
+          "transformRule": "trim"
+        },
+        {
+          "id": "m-4",
+          "couchField": "profile.lastName",
+          "mysqlColumn": "last_name",
+          "dataType": "VARCHAR",
+          "nullable": false,
+          "groupId": "g-2",
+          "transformRule": "trim"
+        },
+        {
+          "id": "m-5",
+          "couchField": "profile.email",
+          "mysqlColumn": "email",
+          "dataType": "VARCHAR",
+          "nullable": false,
+          "groupId": "g-2",
+          "transformRule": "lowercase"
+        },
+        {
+          "id": "m-6",
+          "couchField": "account.creditLimit",
+          "mysqlColumn": "credit_limit",
+          "dataType": "DECIMAL",
+          "nullable": true,
+          "groupId": "g-3",
+          "defaultValue": "0.00"
+        },
+        {
+          "id": "m-7",
+          "couchField": "account.isActive",
+          "mysqlColumn": "is_active",
+          "dataType": "BOOLEAN",
+          "nullable": false,
+          "groupId": "g-4",
+          "defaultValue": "true"
+        },
+        {
+          "id": "m-8",
+          "couchField": "createdAt",
+          "mysqlColumn": "created_at",
+          "dataType": "DATETIME",
+          "nullable": false,
+          "groupId": "g-4",
+          "transformRule": "timestamp_to_datetime"
+        }
+      ]
+    },
+    {
+      "id": "tpl-order",
+      "name": "E-Commerce Order Mapping",
+      "description": "Maps CouchDB order document to MySQL orders & items schema",
+      "targetTable": "mysql_orders",
+      "createdAt": "2026-01-18T11:20:00Z",
+      "updatedAt": "2026-02-22T09:15:00Z",
+      "mappings": [
+        {
+          "id": "mo-1",
+          "couchField": "_id",
+          "mysqlColumn": "order_id",
+          "dataType": "VARCHAR",
+          "nullable": false,
+          "groupId": "g-1"
+        },
+        {
+          "id": "mo-2",
+          "couchField": "customerId",
+          "mysqlColumn": "customer_id",
+          "dataType": "VARCHAR",
+          "nullable": false,
+          "groupId": "g-1"
+        },
+        {
+          "id": "mo-3",
+          "couchField": "orderTotal",
+          "mysqlColumn": "total_amount",
+          "dataType": "DECIMAL",
+          "nullable": false,
+          "groupId": "g-3"
+        },
+        {
+          "id": "mo-4",
+          "couchField": "currency",
+          "mysqlColumn": "currency_code",
+          "dataType": "ENUM",
+          "nullable": false,
+          "groupId": "g-3",
+          "defaultValue": "USD"
+        },
+        {
+          "id": "mo-5",
+          "couchField": "items",
+          "mysqlColumn": "order_items_json",
+          "dataType": "JSON",
+          "nullable": true,
+          "groupId": "g-3",
+          "transformRule": "json_stringify"
+        },
+        {
+          "id": "mo-6",
+          "couchField": "status",
+          "mysqlColumn": "order_status",
+          "dataType": "VARCHAR",
+          "nullable": false,
+          "groupId": "g-4"
+        }
+      ]
+    }
+  ],
+  "fieldGroups": [
+    {
+      "id": "g-1",
+      "name": "Identity & Keys",
+      "description": "Primary keys, UUIDs, revision identifiers",
+      "color": "bg-indigo-500/10 text-indigo-400 border-indigo-500/20"
+    },
+    {
+      "id": "g-2",
+      "name": "Contact Info",
+      "description": "Emails, phones, physical addresses",
+      "color": "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+    },
+    {
+      "id": "g-3",
+      "name": "Financial & Billing",
+      "description": "Prices, currencies, credit status, tax IDs",
+      "color": "bg-amber-500/10 text-amber-400 border-amber-500/20"
+    },
+    {
+      "id": "g-4",
+      "name": "Audit & Metadata",
+      "description": "Timestamps, version tags, state flags",
+      "color": "bg-purple-500/10 text-purple-400 border-purple-500/20"
+    }
+  ],
+  "testRuns": [
+    {
+      "runId": "run-1956",
+      "timestamp": "2026-10-28 17:34:08",
+      "endpointId": "cp-2",
+      "endpointName": "New API vs Customer Profile Mapping",
+      "status": "FAILED",
+      "totalChecked": 8,
+      "passedCount": 7,
+      "failedCount": 1,
+      "durationMs": 21,
+      "failures": [
+        {
+          "id": "vf-r2ozv",
+          "runId": "run-1956",
+          "endpointId": "cp-2",
+          "endpointName": "Customer Profile Mapping",
+          "timestamp": "2026-10-28 17:34:08",
+          "severity": "error",
+          "errorType": "NULL_VIOLATION",
+          "fieldPath": "createdAt",
+          "mysqlColumn": "created_at",
+          "message": "Field \"createdAt\" is null or empty, violating NOT NULL specification.",
+          "payloadSnippet": {}
+        }
+      ]
+    },
+    {
+      "runId": "run-8774",
+      "timestamp": "2026-10-28 17:33:42",
+      "endpointId": "cp-2",
+      "endpointName": "New API vs Customer Profile Mapping",
+      "status": "FAILED",
+      "totalChecked": 8,
+      "passedCount": 7,
+      "failedCount": 1,
+      "durationMs": 13,
+      "failures": [
+        {
+          "id": "vf-oslf7",
+          "runId": "run-8774",
+          "endpointId": "cp-2",
+          "endpointName": "Customer Profile Mapping",
+          "timestamp": "2026-10-28 17:33:42",
+          "severity": "error",
+          "errorType": "NULL_VIOLATION",
+          "fieldPath": "createdAt",
+          "mysqlColumn": "created_at",
+          "message": "Field \"createdAt\" is null or empty, violating NOT NULL specification.",
+          "payloadSnippet": {}
+        }
+      ]
+    }
+  ],
+  "failures": [
+    {
+      "id": "vf-r2ozv",
+      "runId": "run-1956",
+      "endpointId": "cp-2",
+      "endpointName": "Customer Profile Mapping",
+      "timestamp": "2026-10-28 17:34:08",
+      "severity": "error",
+      "errorType": "NULL_VIOLATION",
+      "fieldPath": "createdAt",
+      "mysqlColumn": "created_at",
+      "message": "Field \"createdAt\" is null or empty, violating NOT NULL specification.",
+      "payloadSnippet": {}
+    },
+    {
+      "id": "vf-oslf7",
+      "runId": "run-8774",
+      "endpointId": "cp-2",
+      "endpointName": "Customer Profile Mapping",
+      "timestamp": "2026-10-28 17:33:42",
+      "severity": "error",
+      "errorType": "NULL_VIOLATION",
+      "fieldPath": "createdAt",
+      "mysqlColumn": "created_at",
+      "message": "Field \"createdAt\" is null or empty, violating NOT NULL specification.",
+      "payloadSnippet": {}
+    }
+  ],
+  "validationRules": [
+    {
+      "id": "vr-1",
+      "key": "trim",
+      "desc": "Trims leading and trailing whitespace from string values.",
+      "regexPattern": "",
+      "isBuiltIn": true
+    },
+    {
+      "id": "vr-2",
+      "key": "lowercase",
+      "desc": "Validates and normalizes string characters to lowercase.",
+      "regexPattern": "^[a-z0-9_@.\\-\\s]+$",
+      "isBuiltIn": true
+    },
+    {
+      "id": "vr-3",
+      "key": "uppercase",
+      "desc": "Validates and normalizes string characters to uppercase.",
+      "regexPattern": "^[A-Z0-9_\\-\\s]+$",
+      "isBuiltIn": true
+    },
+    {
+      "id": "vr-4",
+      "key": "timestamp_to_datetime",
+      "desc": "Validates and converts Epoch millisecond timestamps to DATETIME format.",
+      "regexPattern": "",
+      "isBuiltIn": true
+    },
+    {
+      "id": "vr-5",
+      "key": "json_stringify",
+      "desc": "Validates and serializes nested objects/arrays into JSON string format.",
+      "regexPattern": "",
+      "isBuiltIn": true
+    },
+    {
+      "id": "vr-6",
+      "key": "email",
+      "desc": "Validates standard email format using built-in default regex pattern.",
+      "regexPattern": "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$",
+      "isBuiltIn": true
+    },
+    {
+      "id": "vr-7",
+      "key": "alphanumeric",
+      "desc": "Ensures field contains only letters, numbers, underscores, or hyphens.",
+      "regexPattern": "^[a-zA-Z0-9_-]+$",
+      "isBuiltIn": true
+    },
+    {
+      "id": "vr-8",
+      "key": "decimal",
+      "desc": "Validates currency / decimal amount format with up to 2 decimal places.",
+      "regexPattern": "^\\d+(\\.\\d{1,2})?$",
+      "isBuiltIn": true
+    }
+  ]
+}

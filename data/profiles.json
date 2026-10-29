@@ -1,0 +1,14 @@
+[
+  {
+    "id": "prof-default",
+    "name": "Production (US-East)",
+    "description": "Primary production migration environment",
+    "createdAt": "2026-10-28T17:56:51.835Z"
+  },
+  {
+    "id": "prof-staging",
+    "name": "Staging (EU-West)",
+    "description": "Staging environment and pre-release testing",
+    "createdAt": "2026-10-28T17:56:51.835Z"
+  }
+]
